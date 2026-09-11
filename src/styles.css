@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-slate-200 antialiased font-sans overflow-x-hidden;
+    /* Noise texture overlay for a premium matte feel */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-white font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  /* Vibrant Text Gradient */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-secondary-400;
+  }
+
+  /* True Glassmorphism Card */
+  .glass-card {
+    @apply relative overflow-hidden rounded-2xl border border-white/10 bg-glass-gradient backdrop-blur-xl shadow-glass transition-all duration-300;
+  }
+  
+  /* Adds a subtle top inner highlight simulating a glass edge */
+  .glass-card::before {
+    content: '';
+    @apply absolute inset-0 rounded-2xl border border-white/5 pointer-events-none;
+    mask-image: linear-gradient(to bottom, black, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, black, transparent);
+  }
+
+  /* Interactive Glass Card (Hover effects) */
+  .glass-card-interactive {
+    @apply cursor-pointer hover:-translate-y-1 hover:border-white/20 hover:bg-white/5 hover:shadow-glow-purple;
+  }
+
+  /* Selected State for Interactive Cards */
+  .glass-card-selected {
+    @apply border-primary-500 bg-white/10 shadow-glow-purple ring-1 ring-primary-500/50;
+  }
+
+  /* Premium Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold transition-all duration-300 relative overflow-hidden border;
+  }
+
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-600 to-secondary-600 text-white border-transparent shadow-glow-purple hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] hover:scale-[1.02];
+  }
+  
+  .btn-primary::after {
+    content: '';
+    @apply absolute top-0 left-0 w-full h-full bg-white/20 opacity-0 transition-opacity duration-300 pointer-events-none;
+  }
+  .btn-primary:hover::after {
+    @apply opacity-100;
+  }
+
+  .btn-secondary {
+    @apply bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20 backdrop-blur-md;
+  }
+
+  /* Dynamic Progress Bars */
+  .progress-bg {
+    @apply w-full h-2 rounded-full bg-white/5 overflow-hidden shadow-inner;
+  }
+
+  .progress-fill {
+    @apply h-full rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(139,92,246,0.5)];
+  }
+
+  /* Difficulty Badges */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-md border;
+  }
+  .badge-easy { @apply bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]; }
+  .badge-medium { @apply bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.2)]; }
+  .badge-hard { @apply bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-[0_0_10px_rgba(239,68,68,0.2)]; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in  { animation: fadeIn  0.45s ease both; }
+.animate-slide-up { animation: slideUp 0.55s ease both; }
+
+@layer utilities {
+  /* Ambient glowing orbs background */
+  .bg-glow {
+    @apply fixed inset-0 -z-10 overflow-hidden pointer-events-none bg-background;
+  }
+  
+  .bg-glow::before, .bg-glow::after {
+    content: '';
+    @apply absolute rounded-full opacity-30 mix-blend-screen filter blur-[120px] animate-pulse-slow;
+  }
+
+  .bg-glow::before {
+    @apply top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-primary-600;
+    animation-delay: 0s;
+  }
+
+  .bg-glow::after {
+    @apply bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] bg-secondary-600;
+    animation-delay: 2s;
+  }
+  
+  /* Additional orb for depth */
+  .bg-glow-orb {
+    @apply absolute top-[40%] left-[60%] w-[40vw] h-[40vw] rounded-full bg-fuchsia-600/20 filter blur-[100px] mix-blend-screen animate-float pointer-events-none -z-10;
+  }
+}
+
