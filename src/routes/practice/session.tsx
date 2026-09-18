@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { Send, Mic, PhoneOff, ArrowRight } from 'lucide-react';
+import { Send, Mic, PhoneOff, Loader2 } from 'lucide-react';
 import { useSimulationStore } from '../../lib/simulation-store';
 import { api } from '../../lib/api';
 
@@ -10,7 +10,7 @@ export const Route = createFileRoute('/practice/session')({
 
 function SessionComponent() {
   const navigate = useNavigate();
-  const { selectedSkill, selectedScenario, difficulty, sessionId, messages, addMessage } = useSimulationStore();
+  const { selectedScenario, difficulty, sessionId, messages, addMessage } = useSimulationStore();
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isEnding, setIsEnding] = useState(false);

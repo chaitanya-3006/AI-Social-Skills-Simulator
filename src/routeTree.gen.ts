@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PracticeDifficultyRouteImport } from './routes/practice/difficulty'
 import { Route as PracticeResultsRouteImport } from './routes/practice/results'
@@ -29,9 +31,19 @@ const HistoryRoute = HistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProgressRoute = ProgressRouteImport.update({
   id: '/progress',
   path: '/progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -68,7 +80,9 @@ const PracticeSkillRoute = PracticeSkillRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
+  '/login': typeof LoginRoute
   '/progress': typeof ProgressRoute
+  '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/practice/difficulty': typeof PracticeDifficultyRoute
   '/practice/results': typeof PracticeResultsRoute
@@ -79,7 +93,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
+  '/login': typeof LoginRoute
   '/progress': typeof ProgressRoute
+  '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/practice/difficulty': typeof PracticeDifficultyRoute
   '/practice/results': typeof PracticeResultsRoute
@@ -91,7 +107,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
+  '/login': typeof LoginRoute
   '/progress': typeof ProgressRoute
+  '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/practice/difficulty': typeof PracticeDifficultyRoute
   '/practice/results': typeof PracticeResultsRoute
@@ -104,7 +122,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/history'
+    | '/login'
     | '/progress'
+    | '/register'
     | '/settings'
     | '/practice/difficulty'
     | '/practice/results'
@@ -115,7 +135,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/history'
+    | '/login'
     | '/progress'
+    | '/register'
     | '/settings'
     | '/practice/difficulty'
     | '/practice/results'
@@ -126,7 +148,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/history'
+    | '/login'
     | '/progress'
+    | '/register'
     | '/settings'
     | '/practice/difficulty'
     | '/practice/results'
@@ -138,7 +162,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HistoryRoute: typeof HistoryRoute
+  LoginRoute: typeof LoginRoute
   ProgressRoute: typeof ProgressRoute
+  RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
   PracticeDifficultyRoute: typeof PracticeDifficultyRoute
   PracticeResultsRoute: typeof PracticeResultsRoute
@@ -163,11 +189,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/progress': {
       id: '/progress'
       path: '/progress'
       fullPath: '/progress'
       preLoaderRoute: typeof ProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -218,7 +258,9 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HistoryRoute: HistoryRoute,
+  LoginRoute: LoginRoute,
   ProgressRoute: ProgressRoute,
+  RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
   PracticeDifficultyRoute: PracticeDifficultyRoute,
   PracticeResultsRoute: PracticeResultsRoute,

@@ -1,10 +1,40 @@
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface RegisterResponse {
+  user_id: string;
+  name: string;
+  email: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
+  user?: User;
+}
+
 export interface Skill {
   id: string;
   name: string;
   score: number;
   description: string;
+  icon?: string;
 }
 
 export interface Scenario {
@@ -26,12 +56,48 @@ export interface Message {
   timestamp: string;
 }
 
+export const defaultUser: User = {
+  id: 'usr_123',
+  name: 'Chaitanya',
+  email: 'chaitanya@example.com'
+};
+
 export const skills: Skill[] = [
-  { id: 'communication', name: 'Communication', score: 80, description: 'Express ideas clearly and effectively' },
-  { id: 'confidence', name: 'Confidence', score: 70, description: 'Speak with assurance and presence' },
-  { id: 'active-listening', name: 'Active Listening', score: 60, description: 'Understand and respond thoughtfully' },
-  { id: 'small-talk', name: 'Small Talk', score: 90, description: 'Navigate casual social interactions' },
-  { id: 'conflict', name: 'Conflict Handling', score: 55, description: 'De-escalate and resolve disagreements' }
+  { 
+    id: 'communication', 
+    name: 'Communication', 
+    score: 80, 
+    description: 'Practice expressing your thoughts clearly and persuasively',
+    icon: 'message-circle'
+  },
+  { 
+    id: 'confidence', 
+    name: 'Confidence', 
+    score: 70, 
+    description: 'Practice speaking with assurance, presence, and conviction',
+    icon: 'mic'
+  },
+  { 
+    id: 'active-listening', 
+    name: 'Active Listening', 
+    score: 60, 
+    description: 'Understand nuances, validate feelings, and respond thoughtfully',
+    icon: 'ear'
+  },
+  { 
+    id: 'small-talk', 
+    name: 'Small Talk', 
+    score: 90, 
+    description: 'Navigate casual social interactions and build effortless rapport',
+    icon: 'users'
+  },
+  { 
+    id: 'conflict', 
+    name: 'Conflict Handling', 
+    score: 55, 
+    description: 'De-escalate tension, resolve disagreements, and find common ground',
+    icon: 'shield-alert'
+  }
 ];
 
 export const scenarios: Scenario[] = [

@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowRight, Sparkles, TrendingUp, Zap, MessageCircle, Mic, Ear, Users, ShieldAlert, Clock } from 'lucide-react';
-import { skills, recentSessions } from '../lib/mock-data';
+import { recentSessions, Skill } from '../lib/mock-data';
+import { api } from '../lib/api';
+import { useAuthStore } from '../lib/auth-store';
 
 export const Route = createFileRoute('/')({
   component: DashboardComponent,
@@ -9,22 +11,45 @@ export const Route = createFileRoute('/')({
 
 const skillIcons: Record<string, React.ReactNode> = {
   'communication': <MessageCircle className="w-5 h-5 text-violet-400" />,
+  'message-circle': <MessageCircle className="w-5 h-5 text-violet-400" />,
   'confidence': <Mic className="w-5 h-5 text-blue-400" />,
+  'mic': <Mic className="w-5 h-5 text-blue-400" />,
   'active-listening': <Ear className="w-5 h-5 text-emerald-400" />,
+  'ear': <Ear className="w-5 h-5 text-emerald-400" />,
   'small-talk': <Users className="w-5 h-5 text-amber-400" />,
+  'users': <Users className="w-5 h-5 text-amber-400" />,
   'conflict': <ShieldAlert className="w-5 h-5 text-rose-400" />,
+  'shield-alert': <ShieldAlert className="w-5 h-5 text-rose-400" />,
 };
 
 function DashboardComponent() {
   const [mounted, setMounted] = useState(false);
+  const [skillsList, setSkillsList] = useState<Skill[]>([]);
+  const [loadingSkills, setLoadingSkills] = useState(true);
+
+  const { user } = useAuthStore();
 
   useEffect(() => {
+    const loadSkills = async () => {
+      try {
+        const data = await api.getSkills();
+        setSkillsList(data);
+      } catch (err) {
+        console.error('Failed to load skills', err);
+      } finally {
+        setLoadingSkills(false);
+      }
+    };
+
+    loadSkills();
     const t = setTimeout(() => setMounted(true), 100);
     return () => clearTimeout(t);
   }, []);
 
+  const displayName = user?.name ? user.name.split(' ')[0] : 'Chaitanya';
+
   return (
-    <div className="p-6 md:p-10 max-w-6xl mx-auto">
+    <div className="p-6 md:p-10 max-w-6xl mx-auto animate-fade-in">
       {/* Header */}
       <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
@@ -34,7 +59,7 @@ function DashboardComponent() {
           </p>
           <h1 className="text-4xl font-bold text-white leading-tight">
             Good afternoon,{' '}
-            <span className="text-gradient">Chaitanya</span>
+            <span className="text-gradient">{displayName}</span>
           </h1>
         </div>
         <Link
@@ -51,37 +76,57 @@ function DashboardComponent() {
           <TrendingUp className="w-5 h-5 text-slate-400" />
           Your Skills
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {skills.slice(0, 4).map((skill, index) => (
-            <div
-              key={skill.id}
-              className="glass-card p-5 flex flex-col gap-4"
-              style={{ animationDelay: `${index * 80}ms` }}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
-                  {skillIcons[skill.id]}
-                </div>
-                <div className="min-w-0">
-                  <p className="font-semibold text-white text-sm leading-tight">{skill.name}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Social skill</p>
-                </div>
+        
+        {loadingSkills ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="glass-card p-5 h-28 animate-pulse flex flex-col justify-between">
+                <div className="h-4 bg-white/10 rounded w-2/3"></div>
+                <div className="h-2 bg-white/10 rounded w-full"></div>
               </div>
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs text-slate-400">Progress</span>
-                  <span className="text-sm font-bold text-white">{skill.score}<span className="text-slate-500 text-xs">/100</span></span>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {skillsList.slice(0, 4).map((skill, index) => {
+              const iconKey = skill.icon || skill.id;
+              const icon = skillIcons[iconKey] || <Sparkles className="w-5 h-5 text-violet-400" />;
+              
+              return (
+                <div
+                  key={skill.id}
+                  className="glass-card p-5 flex flex-col gap-4"
+                  style={{ animationDelay: `${index * 80}ms` }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
+                      {icon}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-white text-sm leading-tight truncate">{skill.name}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Social skill</p>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs text-slate-400">Progress</span>
+                      <span className="text-sm font-bold text-white">
+                        {skill.score || 0}
+                        <span className="text-slate-500 text-xs">/100</span>
+                      </span>
+                    </div>
+                    <div className="progress-bg">
+                      <div
+                        className="progress-fill"
+                        style={{ width: mounted ? `${skill.score || 0}%` : '0%' }}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="progress-bg">
-                  <div
-                    className="progress-fill"
-                    style={{ width: mounted ? `${skill.score}%` : '0%' }}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Quick Practice + Recent Sessions */}

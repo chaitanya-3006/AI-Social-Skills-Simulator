@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
-import { Trophy, CheckCircle, AlertCircle, ArrowRight, Home, RefreshCcw, MessageSquare, Lightbulb, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { Trophy, CheckCircle, AlertCircle, Home, RefreshCcw, Lightbulb } from 'lucide-react';
 import { useSimulationStore } from '../../lib/simulation-store';
 import { api } from '../../lib/api';
 
