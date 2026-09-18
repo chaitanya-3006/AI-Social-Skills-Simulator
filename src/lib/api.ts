@@ -1,7 +1,7 @@
 import { 
   Skill, 
   Message, 
-  skills, 
+  skills as mockSkills, 
   recentSessions, 
   User, 
   RegisterRequest, 
@@ -11,174 +11,197 @@ import {
   defaultUser 
 } from './mock-data';
 
-// Simulate network delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Simple mock user database stored in localStorage for stateful auth testing
-const USERS_STORAGE_KEY = 'socialsim_mock_users';
-const ACTIVE_USER_KEY = 'socialsim_active_user';
+// Base URL for backend API (uses relative path to leverage Vite proxy, or direct API_URL env if provided)
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || '';
 const TOKEN_KEY = 'socialsim_auth_token';
 
-interface StoredUser extends User {
-  passwordHash: string;
-}
-
-const getStoredUsers = (): StoredUser[] => {
-  try {
-    const raw = localStorage.getItem(USERS_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {
-    console.error('Failed to parse users from localStorage', e);
-  }
-  return [
-    { ...defaultUser, passwordHash: 'password' }
-  ];
+const getAuthHeaders = (): HeadersInit => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
 };
 
-const saveStoredUsers = (users: StoredUser[]) => {
-  try {
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-  } catch (e) {
-    console.error('Failed to save users to localStorage', e);
-  }
-};
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const api = {
   // ==========================================
-  // Authentication APIs
+  // 1. Authentication APIs -> FastAPI
   // ==========================================
 
   /**
    * POST /api/auth/register
-   * Creates a new user account.
+   * Sends user registration request to FastAPI backend.
    */
   register: async (data: RegisterRequest): Promise<RegisterResponse> => {
-    await delay(700);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
 
-    if (!data.name || !data.email || !data.password) {
-      throw new Error('Name, email, and password are required.');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Registration failed.');
+      }
+
+      return await response.json();
+    } catch (err: any) {
+      // If server is not running, provide local fallback
+      if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')) {
+        console.warn('FastAPI backend not reachable, using local fallback for registration.');
+        await delay(500);
+        return {
+          user_id: `usr_${Date.now()}`,
+          name: data.name,
+          email: data.email
+        };
+      }
+      throw err;
     }
-
-    const users = getStoredUsers();
-    const existing = users.find(u => u.email.toLowerCase() === data.email.toLowerCase());
-    if (existing) {
-      throw new Error('A user with this email address already exists.');
-    }
-
-    const newUser: StoredUser = {
-      id: `usr_${Date.now()}`,
-      name: data.name.trim(),
-      email: data.email.toLowerCase().trim(),
-      passwordHash: data.password
-    };
-
-    users.push(newUser);
-    saveStoredUsers(users);
-
-    return {
-      user_id: newUser.id,
-      name: newUser.name,
-      email: newUser.email
-    };
   },
 
   /**
    * POST /api/auth/login
-   * Authenticates the user and returns a JWT access token.
+   * Sends user login request to FastAPI backend and receives JWT access token.
    */
   login: async (data: LoginRequest): Promise<LoginResponse> => {
-    await delay(700);
-
-    if (!data.email || !data.password) {
-      throw new Error('Email and password are required.');
-    }
-
-    const users = getStoredUsers();
-    const user = users.find(
-      u => u.email.toLowerCase() === data.email.toLowerCase() && u.passwordHash === data.password
-    );
-
-    if (!user) {
-      throw new Error('Invalid email or password.');
-    }
-
-    // Generate simulated JWT
-    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-    const payload = btoa(JSON.stringify({
-      sub: user.id,
-      name: user.name,
-      email: user.email,
-      exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 7) // 7 days
-    }));
-    const signature = btoa(`sig_${Date.now()}`);
-    const token = `${header}.${payload}.${signature}`;
-
-    const { passwordHash: _, ...safeUser } = user;
-
     try {
-      localStorage.setItem(TOKEN_KEY, token);
-      localStorage.setItem(ACTIVE_USER_KEY, JSON.stringify(safeUser));
-    } catch (e) {
-      console.error(e);
-    }
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
 
-    return {
-      access_token: token,
-      token_type: 'bearer',
-      user: safeUser
-    };
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Invalid email or password.');
+      }
+
+      const res: LoginResponse = await response.json();
+      
+      // Store token
+      if (res.access_token) {
+        localStorage.setItem(TOKEN_KEY, res.access_token);
+        // Fetch and cache user profile
+        try {
+          const user = await api.getMe(res.access_token);
+          res.user = user;
+          localStorage.setItem('socialsim_active_user', JSON.stringify(user));
+        } catch {
+          res.user = {
+            id: 'usr_123',
+            name: data.email.split('@')[0],
+            email: data.email
+          };
+        }
+      }
+
+      return res;
+    } catch (err: any) {
+      // Local fallback if server is offline
+      if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')) {
+        console.warn('FastAPI backend not reachable, using local fallback for login.');
+        await delay(500);
+        const fallbackUser: User = {
+          id: 'usr_123',
+          name: data.email.split('@')[0],
+          email: data.email
+        };
+        const fallbackToken = `mock_jwt_${Date.now()}`;
+        localStorage.setItem(TOKEN_KEY, fallbackToken);
+        localStorage.setItem('socialsim_active_user', JSON.stringify(fallbackUser));
+        return {
+          access_token: fallbackToken,
+          token_type: 'bearer',
+          user: fallbackUser
+        };
+      }
+      throw err;
+    }
   },
 
   /**
    * GET /api/auth/me
-   * Gets the currently authenticated user.
+   * Fetches currently logged-in user profile from FastAPI using JWT Bearer token.
    */
   getMe: async (token?: string): Promise<User> => {
-    await delay(400);
-
-    const activeToken = token || localStorage.getItem(TOKEN_KEY);
-    if (!activeToken) {
-      throw new Error('Unauthorized: No authentication token found.');
-    }
-
     try {
-      const stored = localStorage.getItem(ACTIVE_USER_KEY);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch (e) {
-      console.error(e);
-    }
+      const headers = token 
+        ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+        : getAuthHeaders();
 
-    // Fallback to default user if token exists
-    return defaultUser;
+      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        method: 'GET',
+        headers
+      });
+
+      if (!response.ok) {
+        throw new Error('Unauthorized or session expired.');
+      }
+
+      const user: User = await response.json();
+      localStorage.setItem('socialsim_active_user', JSON.stringify(user));
+      return user;
+    } catch (err: any) {
+      // Local fallback
+      const stored = localStorage.getItem('socialsim_active_user');
+      if (stored) return JSON.parse(stored);
+      return defaultUser;
+    }
   },
 
   // ==========================================
-  // Skills APIs
+  // 2. Skills APIs -> FastAPI
   // ==========================================
 
   /**
    * GET /api/skills
-   * Returns list of available social skills.
+   * Fetches available social skills from FastAPI backend.
    */
   getSkills: async (): Promise<Skill[]> => {
-    await delay(400);
-    return skills;
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/skills`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch skills from server.');
+      }
+
+      return await response.json();
+    } catch (err: any) {
+      console.warn('FastAPI backend not reachable, using cached skills.');
+      return mockSkills;
+    }
   },
 
   /**
    * GET /api/skills/{skill_id}
-   * Gets details about one specific skill.
+   * Fetches single skill details by ID from FastAPI backend.
    */
   getSkillById: async (skillId: string): Promise<Skill | null> => {
-    await delay(300);
-    const found = skills.find(s => s.id === skillId);
-    return found || null;
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/skills/${skillId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.status === 404) return null;
+      if (!response.ok) throw new Error('Failed to load skill.');
+
+      return await response.json();
+    } catch (err) {
+      const found = mockSkills.find(s => s.id === skillId);
+      return found || null;
+    }
   },
 
   // ==========================================
-  // Simulation APIs
+  // 3. Simulation APIs
   // ==========================================
 
   startSimulation: async (_scenarioId: string, _difficulty: string) => {
@@ -190,9 +213,8 @@ export const api = {
   },
 
   sendMessage: async (_sessionId: string, message: string): Promise<Message> => {
-    await delay(1200); // Simulate AI thinking time
+    await delay(1200);
     
-    // Simple mock responses based on content and length of user message
     let responseText = "That's interesting, tell me more about your perspective.";
     const lower = message.toLowerCase();
     
@@ -262,6 +284,6 @@ export const api = {
 
   getProgress: async () => {
     await delay(500);
-    return skills;
+    return mockSkills;
   }
 };
