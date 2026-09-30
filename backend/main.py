@@ -10,11 +10,16 @@ from config import settings
 from database import init_db
 from routers.auth import router as auth_router
 from routers.skills import router as skills_router
+from routers.scenarios import router as scenarios_router
+from routers.simulation import router as simulation_router
+from routers.history import router as history_router
+from routers.progress import router as progress_router
+from routers.voice import router as voice_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.PROJECT_VERSION,
-    description="SocialSim API — Backend for AI Social Skills Simulator with Authentication and Skills APIs"
+    description="SocialSim API — Full Backend for AI Social Skills Simulator with OpenRouter LLM & ElevenLabs Voice"
 )
 
 # CORS Middleware
@@ -34,6 +39,11 @@ def on_startup():
 # Include Routers
 app.include_router(auth_router)
 app.include_router(skills_router)
+app.include_router(scenarios_router)
+app.include_router(simulation_router)
+app.include_router(history_router)
+app.include_router(progress_router)
+app.include_router(voice_router)
 
 @app.get("/")
 def root():

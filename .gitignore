@@ -16,6 +16,13 @@ dist-ssr
 __pycache__
 *.pyc
 
+# Environment & Secret files
+.env
+.env.*
+*.env
+backend/.env
+!.env.example
+!backend/.env.example
 
 # Editor directories and files
 .vscode/*

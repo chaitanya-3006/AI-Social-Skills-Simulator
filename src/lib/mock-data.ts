@@ -56,6 +56,53 @@ export interface Message {
   timestamp: string;
 }
 
+export interface EvaluationData {
+  overallScore: number;
+  skills: Array<{ name: string; score: number }>;
+  whatYouDidWell: string[];
+  areasToImprove: string[];
+  betterResponses: Array<{ type: string; text: string }>;
+}
+
+export interface SessionHistoryItem {
+  id: string;
+  scenarioId: string;
+  scenarioTitle: string;
+  skillId: string;
+  skillName: string;
+  difficulty: Difficulty;
+  date: string;
+  score: number;
+  characterName: string;
+  avatarUrl: string;
+}
+
+export interface SessionHistoryDetail {
+  id: string;
+  scenarioId: string;
+  scenarioTitle: string;
+  skillId: string;
+  skillName: string;
+  difficulty: Difficulty;
+  date: string;
+  messages: Message[];
+  evaluation?: EvaluationData;
+}
+
+export interface UserProgressData {
+  totalSessions: number;
+  averageScore: number;
+  streakDays: number;
+  totalPracticeMinutes: number;
+  skills: Skill[];
+  recentActivity: Array<{
+    sessionId: string;
+    title: string;
+    score: number;
+    date: string;
+  }>;
+}
+
 export const defaultUser: User = {
   id: 'usr_123',
   name: 'Chaitanya',
@@ -133,11 +180,66 @@ export const scenarios: Scenario[] = [
     characterStatus: 'Offline',
     characterTags: ['Defensive', 'Stressed'],
     avatarUrl: 'https://api.dicebear.com/7.x/notionists/svg?seed=Jordan&backgroundColor=c0aede'
+  },
+  {
+    id: 'active-listening-friend',
+    skillId: 'active-listening',
+    title: 'Supporting a Stressed Colleague',
+    description: 'A teammate is overwhelmed with their current workload and opens up to you. Listen and support them without being dismissive.',
+    characterName: 'Elena',
+    characterRole: 'Software Engineer',
+    characterStatus: 'Online',
+    characterTags: ['Vulnerable', 'Overworked', 'Appreciative'],
+    avatarUrl: 'https://api.dicebear.com/7.x/notionists/svg?seed=Elena&backgroundColor=ffd5dc'
+  },
+  {
+    id: 'clear-presentation',
+    skillId: 'communication',
+    title: 'Project Pitch to Stakeholders',
+    description: 'Present an innovative new feature proposal to a skeptical project lead and clearly articulate its benefits.',
+    characterName: 'Marcus',
+    characterRole: 'Product Director',
+    characterStatus: 'Online',
+    characterTags: ['Analytical', 'Direct', 'Results-Oriented'],
+    avatarUrl: 'https://api.dicebear.com/7.x/notionists/svg?seed=Marcus&backgroundColor=d1d4f9'
   }
 ];
 
-export const recentSessions = [
-  { id: '1', scenarioTitle: 'Coffee Shop Chat', date: '2 hours ago', score: 8.5 },
-  { id: '2', scenarioTitle: 'Networking Event Mixer', date: 'Yesterday', score: 7.2 },
-  { id: '3', scenarioTitle: 'Job Interview Prep', date: '3 days ago', score: 9.0 }
+export const recentSessions: SessionHistoryItem[] = [
+  { 
+    id: '1', 
+    scenarioId: 'small-talk-coffee',
+    scenarioTitle: 'Coffee Shop Chat', 
+    skillId: 'small-talk',
+    skillName: 'Small Talk',
+    difficulty: 'easy',
+    date: '2 hours ago', 
+    score: 8.5,
+    characterName: 'Barista Sam',
+    avatarUrl: 'https://api.dicebear.com/7.x/notionists/svg?seed=Sam&backgroundColor=b6e3f4'
+  },
+  { 
+    id: '2', 
+    scenarioId: 'networking-event',
+    scenarioTitle: 'Networking Event Mixer', 
+    skillId: 'small-talk',
+    skillName: 'Small Talk',
+    difficulty: 'medium',
+    date: 'Yesterday', 
+    score: 7.2,
+    characterName: 'Alex',
+    avatarUrl: 'https://api.dicebear.com/7.x/notionists/svg?seed=Alex&backgroundColor=b6e3f4'
+  },
+  { 
+    id: '3', 
+    scenarioId: 'salary-negotiation',
+    scenarioTitle: 'Job Interview Prep', 
+    skillId: 'confidence',
+    skillName: 'Confidence',
+    difficulty: 'hard',
+    date: '3 days ago', 
+    score: 9.0,
+    characterName: 'Sarah',
+    avatarUrl: 'https://api.dicebear.com/7.x/notionists/svg?seed=Sarah&backgroundColor=ffdfbf'
+  }
 ];
