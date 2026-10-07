@@ -251,3 +251,161 @@ def fallback_evaluation(history: List[Dict[str, Any]]) -> Dict[str, Any]:
             {"type": "Friendly", "text": "I'd love to understand your viewpoint better so we can make this work smoothly."}
         ]
     }
+
+
+def generate_scenarios_openrouter(
+    skill_id: str,
+    skill_name: str,
+    past_stats: Dict[str, Any]
+) -> List[Dict[str, Any]]:
+    """
+    Generates 3 dynamic, personalized practice scenarios for a given skill based on user performance.
+    """
+    if not settings.OPENROUTER_API_KEY:
+        return fallback_generate_scenarios(skill_id, skill_name, past_stats)
+
+    avg_score = past_stats.get("avg_score", 7.5)
+    sessions_count = past_stats.get("total_sessions", 0)
+    strengths = past_stats.get("strengths", [])
+    improvements = past_stats.get("improvements", [])
+
+    system_prompt = """You are an expert AI social skills curriculum designer for SocialSim.
+Your task is to generate 3 realistic, engaging roleplay scenarios tailored to a user practicing a specific social skill.
+Take into account the user's skill level to craft 3 distinct options:
+1. Warm-up scenario (approachable, supportive context)
+2. Target scenario (matches their current skill score directly)
+3. Challenge scenario (stretches their ability with slightly higher stakes)
+
+Return ONLY a valid JSON list containing exactly 3 scenario objects with this exact structure:
+[
+  {
+    "id": "unique-slug-id-1",
+    "skill_id": "skill-id",
+    "title": "Short Catchy Scenario Title",
+    "description": "2-sentence scenario context outlining the situation and the user's objective.",
+    "character_name": "First Name",
+    "character_role": "Job Title or Persona Role",
+    "character_status": "Online",
+    "character_tags": ["Trait1", "Trait2", "Trait3"],
+    "avatar_url": "https://api.dicebear.com/7.x/notionists/svg?seed=FirstName&backgroundColor=b6e3f4"
+  }
+]
+Use valid background colors in avatar_url: b6e3f4, ffdfbf, c0aede, ffd5dc, d1d4f9.
+Output ONLY the raw JSON list."""
+
+    user_prompt = f"""Skill: {skill_name} (ID: {skill_id})
+User Metrics:
+- Completed Simulations in this Skill: {sessions_count}
+- Average Score: {avg_score}/10
+- Known Strengths: {", ".join(strengths[:2]) if strengths else "Enthusiastic participant"}
+- Areas to Focus On: {", ".join(improvements[:2]) if improvements else "Clear articulation and active listening"}
+
+Generate 3 personalized scenarios now:"""
+
+    headers = {
+        "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "http://localhost:5173",
+        "X-Title": "SocialSim AI Simulator"
+    }
+    
+    payload = {
+        "model": settings.OPENROUTER_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        "max_tokens": 800,
+        "temperature": 0.8
+    }
+
+    try:
+        response = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=15)
+        if response.status_code == 200:
+            content = response.json()["choices"][0]["message"]["content"].strip()
+            if content.startswith("```"):
+                content = content.split("```")[1]
+                if content.startswith("json"):
+                    content = content[4:].strip()
+            
+            parsed = json.loads(content)
+            if isinstance(parsed, dict):
+                for v in parsed.values():
+                    if isinstance(v, list) and len(v) >= 3:
+                        parsed = v
+                        break
+            if isinstance(parsed, list) and len(parsed) >= 3:
+                scenarios = []
+                for idx, item in enumerate(parsed[:3]):
+                    slug = f"ai-{skill_id}-{int(random.random() * 100000)}"
+                    scenarios.append({
+                        "id": str(item.get("id", slug)),
+                        "skill_id": skill_id,
+                        "title": str(item.get("title", f"{skill_name} Practice {idx+1}")),
+                        "description": str(item.get("description", "Practice your social skills in this scenario.")),
+                        "character_name": str(item.get("character_name", "Alex")),
+                        "character_role": str(item.get("character_role", "Colleague")),
+                        "character_status": "Online",
+                        "character_tags": item.get("character_tags", ["Realistic", "Engaging"]),
+                        "avatar_url": str(item.get("avatar_url", f"https://api.dicebear.com/7.x/notionists/svg?seed=Avatar{idx}&backgroundColor=b6e3f4"))
+                    })
+                return scenarios
+    except Exception as e:
+        print(f"OpenRouter scenario generation exception: {e}")
+
+    return fallback_generate_scenarios(skill_id, skill_name, past_stats)
+
+
+def fallback_generate_scenarios(skill_id: str, skill_name: str, past_stats: Dict[str, Any]) -> List[Dict[str, Any]]:
+    ts = int(random.random() * 10000)
+    avg_score = past_stats.get("avg_score", 7.5)
+    
+    templates = {
+        "communication": [
+            ("Cross-Functional Alignment", "Liam", "Senior Product Manager", ["Strategic", "Direct", "Busy"], "Discuss project timelines and realign cross-functional deliverables under tight deadlines.", "b6e3f4"),
+            ("Explaining Technical Concepts", "Maya", "Non-Technical Stakeholder", ["Curious", "Attentive", "Detail-Oriented"], "Explain a complex system architecture update in simple, plain language.", "ffdfbf"),
+            ("Client Expectation Management", "David", "Enterprise Client Lead", ["Demanding", "Analytical", "Results-Oriented"], "Address unexpected project scope modifications while maintaining client trust.", "c0aede")
+        ],
+        "confidence": [
+            ("Salary & Promotion Discussion", "Sarah", "HR Manager", ["Professional", "Firm", "Fair"], "Present your key achievements and negotiate for a compensation adjustment.", "ffdfbf"),
+            ("Executive Committee Briefing", "Ethan", "VP of Operations", ["Authoritative", "Time-Constrained", "High-Expectations"], "Pitch an initiative to senior leadership with poise and conviction.", "ffd5dc"),
+            ("Leading a High-Stakes Meeting", "Priya", "Team Director", ["Supportive", "Observant", "Strategic"], "Step up to facilitate an unexpected team strategy meeting.", "d1d4f9")
+        ],
+        "active-listening": [
+            ("Supporting a Stressed Colleague", "Elena", "Software Engineer", ["Vulnerable", "Overworked", "Appreciative"], "Listen carefully to a teammate feeling overwhelmed and validate their concerns.", "ffd5dc"),
+            ("Customer Feedback Discovery", "Rohan", "Beta Tester", ["Frustrated", "Talkative", "Honest"], "Uncover underlying product pain points by actively listening without interrupting.", "b6e3f4"),
+            ("Resolving Misunderstandings", "Chloe", "Design Lead", ["Expressive", "Sensitive", "Collaborative"], "Listen deeply to feedback on a recent design handoff to reach mutual clarity.", "c0aede")
+        ],
+        "small-talk": [
+            ("Networking Event Mixer", "Alex", "College Student", ["Friendly", "Talkative", "Curious"], "Strike up an engaging conversation with a new contact at an industry mixer.", "b6e3f4"),
+            ("Coffee Break Exchange", "Noah", "Senior Consultant", ["Witty", "Relaxed", "Approachable"], "Convert a casual coffee line encounter into a meaningful professional rapport.", "ffdfbf"),
+            ("Airport Lounge Conversation", "Sophia", "Startup Founder", ["Enthusiastic", "Traveler", "Insightful"], "Engage in effortless banter while waiting for a flight connection.", "d1d4f9")
+        ],
+        "conflict": [
+            ("Group Project Disagreement", "Jordan", "Classmate", ["Defensive", "Stressed", "Skeptical"], "Address uneven workload distribution constructively without causing resentment.", "c0aede"),
+            ("Resource Allocation Clash", "Victor", "Engineering Lead", ["Assertive", "Protective", "Pragmatic"], "Resolve a dispute over shared server infrastructure and developer resources.", "ffd5dc"),
+            ("Feedback Pushback", "Hannah", "Senior Designer", ["Proud", "Defensive", "Talented"], "Deliver critical design critique in a way that de-escalates defensiveness.", "b6e3f4")
+        ]
+    }
+
+    selected_templates = templates.get(skill_id, templates["communication"])
+    results = []
+
+    for i, (title, char_name, char_role, tags, desc, bg) in enumerate(selected_templates):
+        sc_id = f"gen-{skill_id}-{i+1}-{ts}"
+        # Adjust title based on skill score tier
+        level_prefix = "Warm-up: " if i == 0 else ("Target: " if i == 1 else "Challenge: ")
+        results.append({
+            "id": sc_id,
+            "skill_id": skill_id,
+            "title": f"{level_prefix}{title}",
+            "description": f"{desc} (Tailored for {avg_score}/10 skill level)",
+            "character_name": char_name,
+            "character_role": char_role,
+            "character_status": "Online",
+            "character_tags": tags,
+            "avatar_url": f"https://api.dicebear.com/7.x/notionists/svg?seed={char_name}&backgroundColor={bg}"
+        })
+
+    return results
+

@@ -217,6 +217,34 @@ export const api = {
     }
   },
 
+  generateScenarios: async (skillId: string): Promise<Scenario[]> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/scenarios/generate`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ skill_id: skillId })
+      });
+
+      if (!response.ok) throw new Error('Failed to generate AI scenarios');
+      const data = await response.json();
+
+      return data.map((d: any) => ({
+        id: d.id,
+        skillId: d.skill_id,
+        title: d.title,
+        description: d.description,
+        characterName: d.character_name,
+        characterRole: d.character_role,
+        characterStatus: d.character_status,
+        characterTags: d.character_tags,
+        avatarUrl: d.avatar_url
+      }));
+    } catch (e) {
+      console.warn('Fallback to standard scenarios', e);
+      return api.getScenarios(skillId);
+    }
+  },
+
   getScenarioById: async (scenarioId: string): Promise<Scenario | null> => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/scenarios/${scenarioId}`, {
