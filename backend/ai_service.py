@@ -393,13 +393,11 @@ def fallback_generate_scenarios(skill_id: str, skill_name: str, past_stats: Dict
 
     for i, (title, char_name, char_role, tags, desc, bg) in enumerate(selected_templates):
         sc_id = f"gen-{skill_id}-{i+1}-{ts}"
-        # Adjust title based on skill score tier
-        level_prefix = "Warm-up: " if i == 0 else ("Target: " if i == 1 else "Challenge: ")
         results.append({
             "id": sc_id,
             "skill_id": skill_id,
-            "title": f"{level_prefix}{title}",
-            "description": f"{desc} (Tailored for {avg_score}/10 skill level)",
+            "title": title,
+            "description": desc,
             "character_name": char_name,
             "character_role": char_role,
             "character_status": "Online",

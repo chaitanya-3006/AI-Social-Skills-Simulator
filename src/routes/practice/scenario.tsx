@@ -104,8 +104,6 @@ function SelectScenarioComponent() {
         ) : (
           scenariosList.map((scenario, index) => {
             const isSelected = selectedScenario?.id === scenario.id;
-            const levelBadge = index === 0 ? 'Warm-Up' : index === 1 ? 'Target Match' : 'Stretch Challenge';
-            const levelColor = index === 0 ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : index === 1 ? 'bg-violet-500/10 text-violet-300 border-violet-500/20' : 'bg-rose-500/10 text-rose-300 border-rose-500/20';
 
             return (
               <div 
@@ -124,9 +122,6 @@ function SelectScenarioComponent() {
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                    <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md border ${levelColor}`}>
-                      {levelBadge}
-                    </span>
                     <h3 className="font-bold text-white text-lg m-0">{scenario.title}</h3>
                     <div className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/5 border border-white/10 text-violet-300">
                       With {scenario.characterName} • {scenario.characterRole}

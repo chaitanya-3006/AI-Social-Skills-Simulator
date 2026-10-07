@@ -44,8 +44,14 @@ function SelectDifficultyComponent() {
   React.useEffect(() => {
     if (!selectedSkill || !selectedScenario) {
       navigate({ to: '/practice/skill' });
+      return;
     }
-  }, [selectedSkill, selectedScenario, navigate]);
+
+    if (!difficulty) {
+      const savedDefault = (localStorage.getItem('socialsim_default_difficulty') as Difficulty) || 'medium';
+      setDifficulty(savedDefault);
+    }
+  }, [selectedSkill, selectedScenario, difficulty, setDifficulty, navigate]);
 
   const handleBack = () => navigate({ to: '/practice/scenario' });
 

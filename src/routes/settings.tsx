@@ -22,13 +22,16 @@ function SettingsComponent() {
 
   const [name, setName] = useState(user?.name || 'Chaitanya');
   const [email] = useState(user?.email || 'chaitanya@example.com');
-  const [defaultDifficulty, setDefaultDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [defaultDifficulty, setDefaultDifficulty] = useState<'easy' | 'medium' | 'hard'>(
+    () => (localStorage.getItem('socialsim_default_difficulty') as 'easy' | 'medium' | 'hard') || 'medium'
+  );
   const [autoScroll, setAutoScroll] = useState(true);
   const [soundEffects, setSoundEffects] = useState(true);
   const [speechSpeed, setSpeechSpeed] = useState<'normal' | 'fast' | 'slow'>('normal');
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
+    localStorage.setItem('socialsim_default_difficulty', defaultDifficulty);
     toast.success('Settings saved successfully!');
   };
 
