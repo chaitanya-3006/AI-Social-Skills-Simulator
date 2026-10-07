@@ -33,6 +33,7 @@ function SessionComponent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const recognitionRef = useRef<any>(null);
+  const hasInitializedRef = useRef<boolean>(false);
 
   // Play ElevenLabs audio for an AI message
   const playAudio = (text: string, characterName: string, msgId: string) => {
@@ -73,27 +74,40 @@ function SessionComponent() {
       navigate({ to: '/practice/skill' });
       return;
     }
-    
-    if (messages.length === 0) {
-      setIsTyping(true);
-      setTimeout(() => {
-        const greetingId = `msg_${Date.now()}_greeting`;
-        const greetingContent = `Hi there! I'm ${selectedScenario.characterName}. How can I help you today?`;
-        
-        addMessage({
-          id: greetingId,
-          role: 'ai',
-          content: greetingContent,
-          timestamp: new Date().toISOString()
-        });
-        setIsTyping(false);
 
-        if (voiceEnabled) {
-          playAudio(greetingContent, selectedScenario.characterName, greetingId);
-        }
-      }, 800);
+    if (hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
+
+    // If an initial greeting message already exists in state (e.g. from backend response)
+    if (messages.length > 0) {
+      const firstMsg = messages[0];
+      if (voiceEnabled && firstMsg.role === 'ai') {
+        playAudio(firstMsg.content, selectedScenario.characterName, firstMsg.id);
+      }
+      return;
     }
-  }, [sessionId, selectedScenario, messages.length, addMessage, navigate]);
+
+    // Fallback: If no message was in state, generate initial greeting
+    setIsTyping(true);
+    const timer = setTimeout(() => {
+      const greetingId = `msg_${Date.now()}_greeting`;
+      const greetingContent = `Hi there! I'm ${selectedScenario.characterName}. How can I help you today?`;
+      
+      addMessage({
+        id: greetingId,
+        role: 'ai',
+        content: greetingContent,
+        timestamp: new Date().toISOString()
+      });
+      setIsTyping(false);
+
+      if (voiceEnabled) {
+        playAudio(greetingContent, selectedScenario.characterName, greetingId);
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

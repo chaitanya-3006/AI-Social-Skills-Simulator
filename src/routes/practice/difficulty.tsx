@@ -38,7 +38,7 @@ const difficulties: { id: Difficulty; title: string; desc: string; icon: React.R
 
 function SelectDifficultyComponent() {
   const navigate = useNavigate();
-  const { selectedSkill, selectedScenario, difficulty, setDifficulty, setSessionId } = useSimulationStore();
+  const { selectedSkill, selectedScenario, difficulty, setDifficulty, setSessionId, addMessage, resetSession } = useSimulationStore();
   const [isStarting, setIsStarting] = useState(false);
 
   React.useEffect(() => {
@@ -53,8 +53,12 @@ function SelectDifficultyComponent() {
     if (!selectedScenario || !difficulty) return;
     setIsStarting(true);
     try {
+      resetSession();
       const result = await api.startSimulation(selectedScenario.id, difficulty);
       setSessionId(result.sessionId);
+      if (result.initialMessage) {
+        addMessage(result.initialMessage);
+      }
       navigate({ to: '/practice/session' });
     } catch (error) {
       console.error(error);
