@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, ArrowRight, Sparkles, RefreshCw, Loader2 } from 'lucide-react';
 import { Scenario } from '../../lib/mock-data';
@@ -15,6 +15,7 @@ function SelectScenarioComponent() {
   const [scenariosList, setScenariosList] = useState<Scenario[]>([]);
   const [loading, setLoading] = useState(true);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const isFetchedRef = useRef(false);
 
   const fetchScenarios = useCallback(async (isRefresh = false) => {
     if (!selectedSkill) return;
@@ -25,7 +26,7 @@ function SelectScenarioComponent() {
       // Generate 3 personalized scenarios taking user past performance into consideration
       const data = await api.generateScenarios(selectedSkill.id);
       setScenariosList(data);
-      if (data.length > 0 && !selectedScenario) {
+      if (data.length > 0) {
         setScenario(data[0]);
       }
     } catch (e) {
@@ -34,14 +35,17 @@ function SelectScenarioComponent() {
       setLoading(false);
       setIsRegenerating(false);
     }
-  }, [selectedSkill, selectedScenario, setScenario]);
+  }, [selectedSkill, setScenario]);
 
   useEffect(() => {
     if (!selectedSkill) {
       navigate({ to: '/practice/skill' });
       return;
     }
-    fetchScenarios();
+    if (!isFetchedRef.current) {
+      isFetchedRef.current = true;
+      fetchScenarios();
+    }
   }, [selectedSkill, navigate, fetchScenarios]);
 
   const handleBack = () => {
@@ -107,8 +111,8 @@ function SelectScenarioComponent() {
               <div 
                 key={scenario.id}
                 onClick={() => setScenario(scenario)}
-                className={`glass-card glass-card-interactive p-6 flex flex-col md:flex-row gap-6 items-start md:items-center transition-all duration-300 relative overflow-hidden
-                  ${isSelected ? 'glass-card-selected ring-2 ring-violet-500 shadow-glow-purple' : ''}
+                className={`glass-card glass-card-interactive p-6 flex flex-col md:flex-row gap-6 items-start md:items-center transition-all duration-300 relative overflow-hidden cursor-pointer
+                  ${isSelected ? 'glass-card-selected ring-2 ring-violet-500 shadow-glow-purple bg-violet-600/10' : ''}
                 `}
                 style={{ animationDelay: `${index * 80}ms` }}
               >
