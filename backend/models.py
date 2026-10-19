@@ -32,6 +32,7 @@ class SkillResponse(BaseModel):
     description: str
     icon: Optional[str] = None
     score: Optional[int] = None
+    sessions_count: Optional[int] = 0
 
 # Scenario Schemas
 class ScenarioResponse(BaseModel):
@@ -114,6 +115,29 @@ class SessionHistoryDetailResponse(BaseModel):
     evaluation: Optional[EvaluationResponse] = None
 
 # Progress Schemas
+class BadgeItem(BaseModel):
+    id: str
+    title: str
+    desc: str
+    unlocked: bool
+    progress_text: str
+    icon: str
+
+class AICoachRecommendation(BaseModel):
+    focus_skill_id: str
+    focus_skill_name: str
+    message: str
+    suggested_scenario_id: str
+    suggested_scenario_title: str
+    difficulty: str
+
+class ScoreHistoryPoint(BaseModel):
+    session_id: str
+    title: str
+    score: float
+    date: str
+    skill_id: str
+
 class UserProgressResponse(BaseModel):
     total_sessions: int
     average_score: float
@@ -121,6 +145,10 @@ class UserProgressResponse(BaseModel):
     total_practice_minutes: int
     skills: List[SkillResponse]
     recent_activity: List[Dict[str, Any]]
+    badges: Optional[List[BadgeItem]] = None
+    ai_recommendation: Optional[AICoachRecommendation] = None
+    confidence_highlights: Optional[List[str]] = None
+    score_history: Optional[List[ScoreHistoryPoint]] = None
 
 # User Profile Update
 class UserProfileUpdateRequest(BaseModel):

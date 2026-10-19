@@ -13,7 +13,8 @@ from database import get_db_connection
 from auth import decode_access_token
 from ai_service import (
     generate_character_reply_openrouter,
-    generate_evaluation_report_openrouter
+    generate_evaluation_report_openrouter,
+    generate_character_opening_openrouter
 )
 
 router = APIRouter(prefix="/api", tags=["Simulation"])
@@ -31,24 +32,44 @@ def get_optional_user_id(authorization: Optional[str] = Header(None)) -> str:
     return "usr_123"
 
 def generate_initial_greeting(scenario: Dict[str, Any], difficulty: str) -> str:
-    char_name = scenario["character_name"]
-    char_role = scenario["character_role"]
-    scenario_id = scenario["id"]
+    char_name = scenario.get("character_name", "Alex")
+    char_role = scenario.get("character_role", "Colleague")
+    scenario_id = scenario.get("id", "")
+    title = scenario.get("title", "")
+    desc = scenario.get("description", "")
+    skill_id = scenario.get("skill_id", "")
     
-    if scenario_id == "networking-event":
-        return f"Hi there! I don't think we've met yet. I'm {char_name}, studying computer science. What brings you to this mixer?"
-    elif scenario_id == "salary-negotiation":
+    # Try dynamic in-character opening from OpenRouter
+    ai_opening = generate_character_opening_openrouter(scenario, difficulty)
+    if ai_opening:
+        return ai_opening
+
+    # Contextual fallbacks
+    if scenario_id == "salary-negotiation":
         return f"Hello! Thanks for taking the time to discuss the offer. As you know, we're very excited about bringing you onto the team as a {char_role}. Have you had a chance to review the package?"
     elif scenario_id == "group-project":
         if difficulty == "hard":
             return f"Look, I know we need to finish this project, but I've had three midterms this week. What do you want me to do?"
         return f"Hey, sorry I've been a bit behind on the project tasks. What parts are we still missing?"
     elif scenario_id == "active-listening-friend":
-        return f"Hey... thanks for grabbing coffee with me. Honestly, I've just been feeling super overwhelmed with our sprint deliverables lately."
+        return f"Hey... thanks for grabbing a moment with me. Honestly, I've just been feeling super overwhelmed with our deliverables lately."
     elif scenario_id == "clear-presentation":
         return f"Thanks for setting up this meeting. I have about ten minutes before my next sync. Walk me through what you're proposing and why we should prioritize it."
-    
-    return f"Hi there! I'm {char_name}. How's everything going with you today?"
+
+    if skill_id == "conflict":
+        if difficulty == "hard":
+            return f"Look, I don't appreciate how this issue was handled. We need to clear the air about '{title}' right now."
+        return f"Thanks for meeting with me. I know there's been some disagreement around '{title}'. How do you suggest we proceed?"
+    elif skill_id == "confidence":
+        return f"Thanks for setting up this sync. As {char_role}, I'm ready to hear your proposal regarding '{title}'. Let's hear what you have in mind."
+    elif skill_id == "active-listening":
+        return f"Thanks for making time to talk. Honestly, things have been feeling quite overwhelming with this project lately."
+    elif skill_id == "small-talk":
+        return f"Hello! Quite a fascinating atmosphere here today. Have you been following the updates on '{title}'?"
+    elif skill_id == "communication":
+        return f"Good to connect with you. I have a few minutes before my next sync—walk me through your update on '{title}'."
+
+    return f"Hello! I'm {char_name}, working as a {char_role}. Let's discuss our next steps together."
 
 # =========================================================================
 # Endpoints
@@ -183,7 +204,7 @@ def end_simulation(req: EndSimulationRequest):
     cursor = conn.cursor()
     
     cursor.execute("""
-        SELECT s.*, sc.title, sc.description as scenario_description, sc.character_name
+        SELECT s.*, sc.title, sc.description as scenario_description, sc.character_name, sc.skill_id
         FROM sessions s
         JOIN scenarios sc ON s.scenario_id = sc.id
         WHERE s.id = ?
@@ -204,9 +225,11 @@ def end_simulation(req: EndSimulationRequest):
     messages = [dict(m) for m in cursor.fetchall()]
     
     scenario_dict = {
+        "id": session["scenario_id"],
         "title": session["title"],
         "description": session["scenario_description"],
-        "character_name": session["character_name"]
+        "character_name": session["character_name"],
+        "skill_id": session["skill_id"]
     }
     
     # Generate comprehensive evaluation report via OpenRouter

@@ -96,18 +96,26 @@ function ResultsComponent() {
             </div>
           </div>
           
-          <div className="w-full space-y-4 relative z-10">
-            {evaluation.skills.slice(0, 3).map((skill: any) => (
-              <div key={skill.name}>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-secondary">{skill.name}</span>
-                  <span className="font-bold">{skill.score}</span>
+          <div className="w-full space-y-3.5 relative z-10">
+            {evaluation.skills.map((skill: any) => {
+              const scoreVal = typeof skill.score === 'number' ? skill.score : parseFloat(skill.score) || 0;
+              const badgeLabel = scoreVal >= 8.5 ? 'Mastery' : (scoreVal >= 7.5 ? 'Strong' : (scoreVal >= 6.0 ? 'Solid' : 'Developing'));
+              const badgeColor = scoreVal >= 8.5 ? 'text-emerald-400 bg-emerald-500/10' : (scoreVal >= 7.5 ? 'text-blue-400 bg-blue-500/10' : 'text-amber-400 bg-amber-500/10');
+              return (
+                <div key={skill.name}>
+                  <div className="flex justify-between items-center text-xs mb-1.5">
+                    <span className="text-slate-300 font-medium">{skill.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${badgeColor}`}>{badgeLabel}</span>
+                      <span className="font-bold text-white">{scoreVal.toFixed(1)}</span>
+                    </div>
+                  </div>
+                  <div className="progress-bg h-1.5">
+                    <div className="progress-fill" style={{ width: `${Math.min(100, (scoreVal / 10) * 100)}%` }}></div>
+                  </div>
                 </div>
-                <div className="progress-bg h-1.5">
-                  <div className="progress-fill" style={{ width: `${(skill.score / 10) * 100}%` }}></div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -170,12 +178,15 @@ function ResultsComponent() {
         ))}
       </div>
 
-      <div className="flex flex-col md:flex-row justify-center gap-4 pt-8 border-t border-[var(--border-color)]">
-        <button onClick={handleBackHome} className="btn btn-secondary px-8">
-          <Home className="w-5 h-5" /> Back to Dashboard
+      <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-8 border-t border-[var(--border-color)]">
+        <button onClick={handleBackHome} className="btn btn-secondary px-6 w-full sm:w-auto">
+          <Home className="w-4 h-4" /> Dashboard
         </button>
-        <button onClick={handlePracticeAgain} className="btn btn-primary px-8">
-          Practice Again <RefreshCcw className="w-5 h-5" />
+        <button onClick={() => navigate({ to: '/progress' })} className="btn btn-secondary px-6 w-full sm:w-auto border-violet-500/30 text-violet-300 hover:text-white">
+          <Trophy className="w-4 h-4 text-amber-400" /> View Skills Progress
+        </button>
+        <button onClick={handlePracticeAgain} className="btn btn-primary px-8 w-full sm:w-auto">
+          Practice Again <RefreshCcw className="w-4 h-4" />
         </button>
       </div>
     </div>

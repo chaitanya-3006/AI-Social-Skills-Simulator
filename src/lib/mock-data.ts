@@ -35,6 +35,7 @@ export interface Skill {
   score: number;
   description: string;
   icon?: string;
+  sessionsCount?: number;
 }
 
 export interface Scenario {
@@ -89,6 +90,32 @@ export interface SessionHistoryDetail {
   evaluation?: EvaluationData;
 }
 
+export interface BadgeItem {
+  id: string;
+  title: string;
+  desc: string;
+  unlocked: boolean;
+  progressText: string;
+  icon: string;
+}
+
+export interface AICoachRecommendation {
+  focusSkillId: string;
+  focusSkillName: string;
+  message: string;
+  suggestedScenarioId: string;
+  suggestedScenarioTitle: string;
+  difficulty: string;
+}
+
+export interface ScoreHistoryPoint {
+  sessionId: string;
+  title: string;
+  score: number;
+  date: string;
+  skillId: string;
+}
+
 export interface UserProgressData {
   totalSessions: number;
   averageScore: number;
@@ -101,6 +128,10 @@ export interface UserProgressData {
     score: number;
     date: string;
   }>;
+  badges?: BadgeItem[];
+  aiRecommendation?: AICoachRecommendation;
+  confidenceHighlights?: string[];
+  scoreHistory?: ScoreHistoryPoint[];
 }
 
 export const defaultUser: User = {

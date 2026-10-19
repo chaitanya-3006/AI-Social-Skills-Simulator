@@ -466,13 +466,44 @@ export const api = {
           averageScore: d.average_score,
           streakDays: d.streak_days,
           totalPracticeMinutes: d.total_practice_minutes,
-          skills: d.skills,
-          recentActivity: d.recent_activity.map((r: any) => ({
+          skills: (d.skills || []).map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            description: s.description,
+            icon: s.icon,
+            score: s.score,
+            sessionsCount: s.sessions_count ?? 0
+          })),
+          recentActivity: (d.recent_activity || []).map((r: any) => ({
             sessionId: r.session_id,
             title: r.title,
             score: r.score,
             date: r.date
-          }))
+          })),
+          badges: d.badges ? d.badges.map((b: any) => ({
+            id: b.id,
+            title: b.title,
+            desc: b.desc,
+            unlocked: b.unlocked,
+            progressText: b.progress_text,
+            icon: b.icon
+          })) : undefined,
+          aiRecommendation: d.ai_recommendation ? {
+            focusSkillId: d.ai_recommendation.focus_skill_id,
+            focusSkillName: d.ai_recommendation.focus_skill_name,
+            message: d.ai_recommendation.message,
+            suggestedScenarioId: d.ai_recommendation.suggested_scenario_id,
+            suggestedScenarioTitle: d.ai_recommendation.suggested_scenario_title,
+            difficulty: d.ai_recommendation.difficulty
+          } : undefined,
+          confidenceHighlights: d.confidence_highlights,
+          scoreHistory: d.score_history ? d.score_history.map((h: any) => ({
+            sessionId: h.session_id,
+            title: h.title,
+            score: h.score,
+            date: h.date,
+            skillId: h.skill_id
+          })) : undefined
         };
       }
     } catch (e) {
